@@ -17,6 +17,10 @@ _Have a question? Ask on [Stack Overflow](http://stackoverflow.com/questions/ask
 
 
 
+This is a fork of the official AlaSQL package for testing out code extensions/modifications, or amendments.
+Do not use this fork. If there will be anything of general interest, it will got as a PR to AlaSQL.
+
+For just getting AlaSQL source go to the official AlaSQL page, see the following information:
 
 # AlaSQL
 
