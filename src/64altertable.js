@@ -59,8 +59,8 @@ yy.AlterTable.prototype.execute = function (databaseid, params, cb) {
 		}
 		var dbtypeid = this.addcolumn.dbtypeid;
 		dbtypeid = dbtypeid && !alasql.fn[dbtypeid] ? dbtypeid.toUpperCase() : dbtypeid;
-		// OBS: alter 1
-		var col = {
+		
+    var col = {
 			columnid: columnid,
 			dbtypeid: dbtypeid,
 			dbsize: this.dbsize,
