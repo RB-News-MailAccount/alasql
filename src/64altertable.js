@@ -57,27 +57,34 @@ yy.AlterTable.prototype.execute = function (databaseid, params, cb) {
 					'"'
 			);
 		}
-
+		var dbtypeid = this.addcolumn.dbtypeid;
+		dbtypeid = dbtypeid && !alasql.fn[dbtypeid] ? dbtypeid.toUpperCase() : dbtypeid;
+		// OBS: alter 1
 		var col = {
 			columnid: columnid,
-			dbtypeid: this.addcolumn.dbtypeid,
+			dbtypeid: dbtypeid,
 			dbsize: this.dbsize,
 			dbprecision: this.dbprecision,
-			dbenum: this.dbenum,
-			defaultfns: null, // TODO defaultfns!!!
+			dbenum: this.dbenum
 		};
-
-		var defaultfn = function () {};
-
+    
 		table.columns.push(col);
 		table.xcolumns[columnid] = col;
-
-		for (var i = 0, ilen = table.data.length; i < ilen; i++) {
-			//				console.log(table.data[i][columnid]);
-			table.data[i][columnid] = defaultfn();
+    
+    var colDefault = this.addcolumn.default
+		if (colDefault != null) {
+      var defns = table.defaultfns == null || table.defaultfns.length === 0 ? "'" : table.defaultfns + ",'";
+		  table.defaultfns = defns + columnid + "':" + colDefault.toJS('r', '');
+		
+			for (var i = 0, ilen = table.data.length; i < ilen; i++) {
+				table.data[i][columnid] = colDefault.value;
+			}
+		} else if (this.addcolumn.notnull && table.data.length > 0) {
+      // The current setup of gulp uglify in this project does not allow template strings
+			throw Error("New column '" + columnid + "' for table '" + tableid + "' has 'NOT NULL' constraint but no default for " + table.data.length + " existing row(s)!");
 		}
-
-		// TODO
+		col.notnull = this.addcolumn.notnull;
+		// TODO: primary key, autoincrement
 		return cb ? cb(1) : 1;
 	} else if (this.modifycolumn) {
 		var db = alasql.databases[this.table.databaseid || databaseid];
