@@ -1,7 +1,7 @@
-//! AlaSQL v0.6.1-develop-33910799undefined | © 2014-2018 Andrey Gershun & Mathias Rangel Wulff | License: MIT
+//! AlaSQL v0.6.1-addcol.defs.notnull-5f6aac75undefined | © 2014-2018 Andrey Gershun & Mathias Rangel Wulff | License: MIT
 /*
 @module alasql
-@version 0.6.1-develop-33910799undefined
+@version 0.6.1-addcol.defs.notnull-5f6aac75undefined
 
 AlaSQL - JavaScript SQL database
 © 2014-2016	Andrey Gershun & Mathias Rangel Wulff
@@ -142,7 +142,7 @@ var alasql = function(sql, params, cb, scope) {
 	Current version of alasql 
  	@constant {string} 
 */
-alasql.version = '0.6.1-develop-33910799undefined';
+alasql.version = '0.6.1-addcol.defs.notnull-5f6aac75undefined';
 
 /**
 	Debug flag
@@ -14129,27 +14129,43 @@ yy.AlterTable.prototype.execute = function (databaseid, params, cb) {
 					'"'
 			);
 		}
+		var dbtypeid = this.addcolumn.dbtypeid;
+		dbtypeid = dbtypeid && !alasql.fn[dbtypeid] ? dbtypeid.toUpperCase() : dbtypeid;
 
 		var col = {
 			columnid: columnid,
-			dbtypeid: this.addcolumn.dbtypeid,
+			dbtypeid: dbtypeid,
 			dbsize: this.dbsize,
 			dbprecision: this.dbprecision,
 			dbenum: this.dbenum,
-			defaultfns: null, // TODO defaultfns!!!
 		};
-
-		var defaultfn = function () {};
 
 		table.columns.push(col);
 		table.xcolumns[columnid] = col;
 
-		for (var i = 0, ilen = table.data.length; i < ilen; i++) {
+		var colDefault = this.addcolumn["default"];
+		if (colDefault != null) {
+			var defns =
+				table.defaultfns == null || table.defaultfns.length === 0 ? "'" : table.defaultfns + ",'";
+			table.defaultfns = defns + columnid + "':" + colDefault.toJS('r', '');
 
-			table.data[i][columnid] = defaultfn();
+			for (var i = 0, ilen = table.data.length; i < ilen; i++) {
+				table.data[i][columnid] = colDefault.value;
+			}
+		} else if (this.addcolumn.notnull && table.data.length > 0) {
+			// The current setup of gulp uglify in this project does not allow template strings
+			throw Error(
+				"New column '" +
+					columnid +
+					"' for table '" +
+					tableid +
+					"' has 'NOT NULL' constraint but no default for " +
+					table.data.length +
+					' existing row(s)!'
+			);
 		}
-
-		// TODO
+		col.notnull = this.addcolumn.notnull;
+		// TODO: primary key, autoincrement
 		return cb ? cb(1) : 1;
 	} else if (this.modifycolumn) {
 		var db = alasql.databases[this.table.databaseid || databaseid];
